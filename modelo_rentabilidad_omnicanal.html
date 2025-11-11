@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelo de Rentabilidad Omnicanal</title>
+    <!-- Incluir Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos personalizados para parecerse a Excel */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .tab-button {
+            @apply px-4 py-2 font-semibold text-gray-700 bg-gray-200 rounded-t-lg cursor-pointer;
+        }
+        .tab-button.active {
+            @apply bg-blue-600 text-white;
+        }
+        .tab-content {
+            @apply hidden p-6 bg-white shadow-lg rounded-b-lg;
+        }
+        .tab-content.active {
+            @apply block;
+        }
+        table {
+            @apply min-w-full divide-y divide-gray-200 border border-gray-300;
+        }
+        th {
+            @apply px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100;
+        }
+        td {
+            @apply px-4 py-2 whitespace-nowrap text-sm text-gray-700;
+        }
+        /* Celda de Input (Amarilla) */
+        .input-cell {
+            @apply bg-yellow-100 border border-yellow-300 rounded-md p-1 w-full text-sm;
+        }
+        /* Celda de Fórmula (Gris claro) */
+        .formula-cell {
+            @apply bg-gray-100 p-1 rounded-md font-medium text-gray-900;
+        }
+        .formula-cell.positive {
+            @apply bg-green-100 text-green-800;
+        }
+        .formula-cell.negative {
+            @apply bg-red-100 text-red-800;
+        }
+    </style>
+    <!-- Fuente Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Modelo de Rentabilidad Omnicanal (Simulador)</h1>
+        <p class="mb-6 text-gray-600">Interactúa con este modelo para evaluar el impacto de la estrategia omnicanal. Las celdas amarillas son datos de entrada (inputs) que puedes modificar. Todos los demás campos se recalcularán automáticamente.</p>
+
+        <!-- Pestañas de Navegación -->
+        <div class="flex border-b border-gray-300">
+            <button id="tab-btn-dashboard" class="tab-button active" onclick="mostrarTab('dashboard')">Dashboard (Resumen)</button>
+            <button id="tab-btn-clv" class="tab-button" onclick="mostrarTab('clv')">1. Cálculo CLV y Ratio CAC</button>
+            <button id="tab-btn-costos" class="tab-button" onclick="mostrarTab('costos')">2. Costos de Cumplimiento</button>
+            <button id="tab-btn-retencion" class="tab-button" onclick="mostrarTab('retencion')">3. Tasa de Retención</button>
+        </div>
+
+        <!-- Contenido de las Pestañas -->
+
+        <!-- ======================================= -->
+        <!-- Pestaña 1: DASHBOARD (Resumen)          -->
+        <!-- ======================================= -->
+        <div id="tab-content-dashboard" class="tab-content active">
+            <h2 class="text-xl font-semibold mb-4 text-blue-700">Resumen Ejecutivo: El Caso Omnicanal</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- Columna 1: CLV y Ratio CAC -->
+                <div class="bg-white p-4 rounded-lg shadow-inner border">
+                    <h3 class="font-semibold mb-3">CLV y Ratio CLV:CAC por Segmento</h3>
+                    <p class="text-xs text-gray-500 mb-2">Hipótesis: El cliente omnicanal (Segmento C) es más valioso y más rentable a largo plazo.</p>
+                    <table class_w-full>
+                        <thead>
+                            <tr>
+                                <th class="w-1/3">Segmento</th>
+                                <th class="w-1/3">CLV (Total)</th>
+                                <th class="w-1/3">Ratio CLV:CAC</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Los datos aquí son poblados por JavaScript -->
+                            <tr>
+                                <td class="font-medium">A (Solo Tienda)</td>
+                                <td><span id="dash_clv_a" class="formula-cell">...</span></td>
+                                <td><span id="dash_ratio_a" class="formula-cell">...</span></td>
+                            </tr>
+                            <tr>
+                                <td class="font-medium">B (Solo Online)</td>
+                                <td><span id="dash_clv_b" class="formula-cell">...</span></td>
+                                <td><span id="dash_ratio_b" class="formula-cell">...</span></td>
+                            </tr>
+                            <tr>
+                                <td class="font-medium text-blue-600">C (Omnicanal)</td>
+                                <td><span id="dash_clv_c" class="formula-cell positive">...</span></td>
+                                <td><span id="dash_ratio_c" class="formula-cell positive">...</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Columna 2: Retención y Costos -->
+                <div class="bg-white p-4 rounded-lg shadow-inner border">
+                    <h3 class="font-semibold mb-3">Retención y Costos Clave</h3>
+                    
+                    <!-- Sub-sección Retención -->
+                    <p class="text-xs text-gray-500 mb-2">Tasa de Retención (Año 1 a Año 2)</p>
+                    <table class="w-full mb-4">
+                        <thead>
+                            <tr>
+                                <th>Segmento</th>
+                                <th>Tasa de Retención</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="font-medium">A (Solo Tienda)</td>
+                                <td><span id="dash_ret_a" class="formula-cell">...</span> %</td>
+                            </tr>
+                            <tr>
+                                <td class="font-medium">B (Solo Online)</td>
+                                <td><span id="dash_ret_b" class="formula-cell">...</span> %</td>
+                            </tr>
+                            <tr>
+                                <td class="font-medium text-blue-600">C (Omnicanal)</td>
+                                <td><span id="dash_ret_c" class="formula-cell positive">...</span> %</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Sub-sección Costos -->
+                    <p class="text-xs text-gray-500 mb-2">Costos de Cumplimiento (Por Pedido)</p>
+                    <table class="w-full">
+                        <thead>
+                            <tr>
+                                <th>Método</th>
+                                <th>Costo Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="font-medium">Envío desde Almacén</td>
+                                <td><span id="dash_cost_almacen" class="formula-cell negative">...</span></td>
+                            </tr>
+                            <tr>
+                                <td class="font-medium">Envío desde Tienda</td>
+                                <td><span id="dash_cost_tienda" class="formula-cell">...</span></td>
+                            </tr>
+                            <tr>
+                                <td class="font-medium text-blue-600">BOPIS (Recoger)</td>
+                                <td><span id="dash_cost_bopis" class="formula-cell positive">...</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================================= -->
+        <!-- Pestaña 2: CÁLCULO CLV y Ratio CAC     -->
+        <!-- ======================================= -->
+        <div id="tab-content-clv" class="tab-content">
+            <h2 class="text-xl font-semibold mb-4 text-blue-700">1. Cálculo de CLV y Ratio CLV:CAC</h2>
+            <p class="text-sm text-gray-600 mb-4">Fórmula (Simple): CLV = (Valor Prom. Pedido × Frecuencia Compra Anual) × Tiempo Vida Cliente (Años)</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Métrica</th>
+                        <th>Segmento A (Solo Tienda)</th>
+                        <th>Segmento B (Solo Online)</th>
+                        <th>Segmento C (Omnicanal)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Inputs -->
+                    <tr class="bg-yellow-50">
+                        <td class="font-medium">Valor Prom. Pedido (AOV)</td>
+                        <td>€ <input type="number" id="clv_aov_a" class="input-cell" value="60" oninput="calcularTodo()"></td>
+                        <td>€ <input type="number" id="clv_aov_b" class="input-cell" value="80" oninput="calcularTodo()"></td>
+                        <td>€ <input type="number" id="clv_aov_c" class="input-cell" value="120" oninput="calcularTodo()"></td>
+                    </tr>
+                    <tr class="bg-yellow-50">
+                        <td class="font-medium">Frecuencia Compra (Anual)</td>
+                        <td><input type="number" id="clv_freq_a" class="input-cell" value="1.5" oninput="calcularTodo()"></td>
+                        <td><input type="number" id="clv_freq_b" class="input-cell" value="2.5" oninput="calcularTodo()"></td>
+                        <td><input type="number" id="clv_freq_c" class="input-cell" value="4.0" oninput="calcularTodo()"></td>
+                    </tr>
+                    <tr class="bg-yellow-50">
+                        <td class="font-medium">Tiempo Vida Cliente (Años)</td>
+                        <td><input type="number" id="clv_vida_a" class="input-cell" value="3" oninput="calcularTodo()"></td>
+                        <td><input type="number" id="clv_vida_b" class="input-cell" value="2" oninput="calcularTodo()"></td>
+                        <td><input type="number" id="clv_vida_c" class="input-cell" value="5" oninput="calcularTodo()"></td>
+                    </tr>
+                    <tr class="bg-yellow-50">
+                        <td class="font-medium">Costo Adquisición (CAC)</td>
+                        <td>€ <input type="number" id="clv_cac_a" class="input-cell" value="40" oninput="calcularTodo()"></td>
+                        <td>€ <input type="number" id="clv_cac_b" class="input-cell" value="50" oninput="calcularTodo()"></td>
+                        <td>€ <input type="number" id="clv_cac_c" class="input-cell" value="65" oninput="calcularTodo()"></td>
+                    </tr>
+                    <!-- Cálculos (Resultados) -->
+                    <tr class="bg-gray-100">
+                        <td class="font-semibold text-blue-600">CLV (Calculado)</td>
+                        <td>€ <span id="clv_total_a" class="formula-cell">...</span></td>
+                        <td>€ <span id="clv_total_b" class="formula-cell">...</span></td>
+                        <td>€ <span id="clv_total_c" class="formula-cell positive">...</span></td>
+                    </tr>
+                    <tr class="bg-gray-100">
+                        <td class="font-semibold text-blue-600">Ratio CLV:CAC (Calculado)</td>
+                        <td><span id="clv_ratio_a" class="formula-cell">...</span> : 1</td>
+                        <td><span id="clv_ratio_b" class="formula-cell">...</span> : 1</td>
+                        <td><span id="clv_ratio_c" class="formula-cell positive">...</span> : 1</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ======================================= -->
+        <!-- Pestaña 3: COSTOS DE CUMPLIMIENTO       -->
+        <!-- ======================================= -->
+        <div id="tab-content-costos" class="tab-content">
+            <h2 class="text-xl font-semibold mb-4 text-blue-700">2. Comparativa de Costos de Cumplimiento (Por Pedido)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Componente del Costo</th>
+                        <th>Envío desde Almacén</th>
+                        <th>Envío desde Tienda (SFS)</th>
+                        <th>BOPIS (Recoger en Tienda)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Inputs -->
+                    <tr class="bg-yellow-50">
+                        <td class="font-medium">Costo de Personal (Picking)</td>
+                        <td>€ <input type="number" id="costo_pick_alm" class="input-cell" value="1.50" oninput="calcularTodo()"></td>
+                        <td>€ <input type="number" id="costo_pick_tie" class="input-cell" value="2.50" oninput="calcularTodo()"></td>
+                        <td>€ <input type="number" id="costo_pick_bopis" class="input-cell" value="2.00" oninput="calcularTodo()"></td>
+                    </tr>
+                    <tr class="bg-yellow-50">
+                        <td class="font-medium">Costo de Empaquetado (Packing)</td>
+                        <td>€ <input type="number" id="costo_pack_alm" class="input-cell" value="1.00" oninput="calcularTodo()"></td>
+                        <td>€ <input type="number" id="costo_pack_tie" class="input-cell" value="1.20" oninput="calcularTodo()"></td>
+                        <td>€ <input type="number" id="costo_pack_bopis" class="input-cell" value="0.50" oninput="calcularTodo()"></td>
+                    </tr>
+                    <tr class="bg-yellow-50">
+                        <td class="font-medium">Costo de Envío (Logística)</td>
+                        <td>€ <input type="number" id="costo_envio_alm" class="input-cell" value="4.50" oninput="calcularTodo()"></td>
+                        <td>€ <input type="number" id="costo_envio_tie" class="input-cell" value="3.00" oninput="calcularTodo()"></td>
+                        <td>€ <input type="number" id="costo_envio_bopis" class="input-cell" value="0.00" oninput="calcularTodo()"></td>
+                    </tr>
+                    <tr class="bg-yellow-50">
+                        <td class="font-medium">Costo de Sistemas / Otros</td>
+                        <td>€ <input type="number" id="costo_otro_alm" class="input-cell" value="0.20" oninput="calcularTodo()"></td>
+                        <td>€ <input type="number" id="costo_otro_tie" class="input-cell" value="0.30" oninput="calcularTodo()"></td>
+                        <td>€ <input type="number" id="costo_otro_bopis" class="input-cell" value="0.25" oninput="calcularTodo()"></td>
+                    </tr>
+                    <!-- Cálculos (Resultados) -->
+                    <tr class="bg-gray-100">
+                        <td class="font-semibold text-blue-600">Costo Total por Pedido</td>
+                        <td>€ <span id="costo_total_alm" class="formula-cell negative">...</span></td>
+                        <td>€ <span id="costo_total_tie" class="formula-cell">...</span></td>
+                        <td>€ <span id="costo_total_bopis" class="formula-cell positive">...</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ======================================= -->
+        <!-- Pestaña 4: TASA DE RETENCIÓN          -->
+        <!-- ======================================= -->
+        <div id="tab-content-retencion" class="tab-content">
+            <h2 class="text-xl font-semibold mb-4 text-blue-700">3. Tasa de Retención por Cohorte (Anual)</h2>
+            <p class="text-sm text-gray-600 mb-4">Comparamos cuántos clientes de la cohorte del "Año 1" siguieron comprando en el "Año 2".</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Segmento</th>
+                        <th>Clientes Iniciales (Año 1)</th>
+                        <th>Clientes Retenidos (Año 2)</th>
+                        <th>Tasa de Retención (Calculada)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Inputs -->
+                    <tr class="bg-yellow-50">
+                        <td class="font-medium">A (Solo Tienda)</td>
+                        <td><input type="number" id="ret_ini_a" class="input-cell" value="10000" oninput="calcularTodo()"></td>
+                        <td><input type="number" id="ret_fin_a" class="input-cell" value="3000" oninput="calcularTodo()"></td>
+                        <td><span id="ret_tasa_a" class="formula-cell">...</span> %</td>
+                    </tr>
+                    <tr class="bg-yellow-50">
+                        <td class="font-medium">B (Solo Online)</td>
+                        <td><input type="number" id="ret_ini_b" class="input-cell" value="8000" oninput="calcularTodo()"></td>
+                        <td><input type="number" id="ret_fin_b" class="input-cell" value="2000" oninput="calcularTodo()"></td>
+                        <td><span id="ret_tasa_b" class="formula-cell">...</span> %</td>
+                    </tr>
+                    <tr class="bg-yellow-50">
+                        <td class="font-medium">C (Omnicanal)</td>
+                        <td><input type="number" id="ret_ini_c" class="input-cell" value="5000" oninput="calcularTodo()"></td>
+                        <td><input type="number" id="ret_fin_c" class="input-cell" value="3000" oninput="calcularTodo()"></td>
+                        <td><span id="ret_tasa_c" class="formula-cell positive">...</span> %</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <script>
+        // --- LÓGICA DE NAVEGACIÓN POR PESTAÑAS ---
+        function mostrarTab(nombreTab) {
+            // Ocultar todos los contenidos
+            const contenidos = document.querySelectorAll('.tab-content');
+            contenidos.forEach(c => c.classList.remove('active'));
+
+            // Quitar clase activa de todos los botones
+            const botones = document.querySelectorAll('.tab-button');
+            botones.forEach(b => b.classList.remove('active'));
+
+            // Mostrar el contenido de la pestaña seleccionada
+            document.getElementById('tab-content-' + nombreTab).classList.add('active');
+
+            // Añadir clase activa al botón seleccionado
+            document.getElementById('tab-btn-' + nombreTab).classList.add('active');
+        }
+
+        // --- LÓGICA DE CÁLCULO ---
+
+        // Función auxiliar para obtener valores numéricos de los inputs
+        function getVal(id) {
+            const valor = document.getElementById(id).value;
+            return parseFloat(valor) || 0;
+        }
+
+        // Función para actualizar el texto de un elemento
+        function setVal(id, valor, precision = 2) {
+            document.getElementById(id).textContent = valor.toFixed(precision);
+        }
+
+        // --- 1. CÁLCULO DE CLV Y RATIO ---
+        function calcularCLV() {
+            // Segmento A
+            const clv_aov_a = getVal('clv_aov_a');
+            const clv_freq_a = getVal('clv_freq_a');
+            const clv_vida_a = getVal('clv_vida_a');
+            const clv_cac_a = getVal('clv_cac_a');
+            const clv_total_a = (clv_aov_a * clv_freq_a) * clv_vida_a;
+            const clv_ratio_a = clv_cac_a > 0 ? clv_total_a / clv_cac_a : 0;
+            
+            setVal('clv_total_a', clv_total_a);
+            setVal('clv_ratio_a', clv_ratio_a);
+            setVal('dash_clv_a', clv_total_a);
+            setVal('dash_ratio_a', clv_ratio_a);
+
+            // Segmento B
+            const clv_aov_b = getVal('clv_aov_b');
+            const clv_freq_b = getVal('clv_freq_b');
+            const clv_vida_b = getVal('clv_vida_b');
+            const clv_cac_b = getVal('clv_cac_b');
+            const clv_total_b = (clv_aov_b * clv_freq_b) * clv_vida_b;
+            const clv_ratio_b = clv_cac_b > 0 ? clv_total_b / clv_cac_b : 0;
+            
+            setVal('clv_total_b', clv_total_b);
+            setVal('clv_ratio_b', clv_ratio_b);
+            setVal('dash_clv_b', clv_total_b);
+            setVal('dash_ratio_b', clv_ratio_b);
+
+            // Segmento C
+            const clv_aov_c = getVal('clv_aov_c');
+            const clv_freq_c = getVal('clv_freq_c');
+            const clv_vida_c = getVal('clv_vida_c');
+            const clv_cac_c = getVal('clv_cac_c');
+            const clv_total_c = (clv_aov_c * clv_freq_c) * clv_vida_c;
+            const clv_ratio_c = clv_cac_c > 0 ? clv_total_c / clv_cac_c : 0;
+            
+            setVal('clv_total_c', clv_total_c);
+            setVal('clv_ratio_c', clv_ratio_c);
+            setVal('dash_clv_c', clv_total_c);
+            setVal('dash_ratio_c', clv_ratio_c);
+        }
+
+        // --- 2. CÁLCULO DE COSTOS DE CUMPLIMIENTO ---
+        function calcularCostos() {
+            // Almacén
+            const costo_total_alm = getVal('costo_pick_alm') + getVal('costo_pack_alm') + getVal('costo_envio_alm') + getVal('costo_otro_alm');
+            setVal('costo_total_alm', costo_total_alm);
+            setVal('dash_cost_almacen', costo_total_alm);
+
+            // Tienda (SFS)
+            const costo_total_tie = getVal('costo_pick_tie') + getVal('costo_pack_tie') + getVal('costo_envio_tie') + getVal('costo_otro_tie');
+            setVal('costo_total_tie', costo_total_tie);
+            setVal('dash_cost_tienda', costo_total_tie);
+
+            // BOPIS
+            const costo_total_bopis = getVal('costo_pick_bopis') + getVal('costo_pack_bopis') + getVal('costo_envio_bopis') + getVal('costo_otro_bopis');
+            setVal('costo_total_bopis', costo_total_bopis);
+            setVal('dash_cost_bopis', costo_total_bopis);
+        }
+
+        // --- 3. CÁLCULO DE TASA DE RETENCIÓN ---
+        function calcularRetencion() {
+            // Segmento A
+            const ret_ini_a = getVal('ret_ini_a');
+            const ret_fin_a = getVal('ret_fin_a');
+            const ret_tasa_a = ret_ini_a > 0 ? (ret_fin_a / ret_ini_a) * 100 : 0;
+            setVal('ret_tasa_a', ret_tasa_a, 0);
+            setVal('dash_ret_a', ret_tasa_a, 0);
+
+            // Segmento B
+            const ret_ini_b = getVal('ret_ini_b');
+            const ret_fin_b = getVal('ret_fin_b');
+            const ret_tasa_b = ret_ini_b > 0 ? (ret_fin_b / ret_ini_b) * 100 : 0;
+            setVal('ret_tasa_b', ret_tasa_b, 0);
+            setVal('dash_ret_b', ret_tasa_b, 0);
+
+            // Segmento C
+            const ret_ini_c = getVal('ret_ini_c');
+            const ret_fin_c = getVal('ret_fin_c');
+            const ret_tasa_c = ret_ini_c > 0 ? (ret_fin_c / ret_ini_c) * 100 : 0;
+            setVal('ret_tasa_c', ret_tasa_c, 0);
+            setVal('dash_ret_c', ret_tasa_c, 0);
+        }
+
+        // --- FUNCIÓN GLOBAL PARA RECALCULAR TODO ---
+        function calcularTodo() {
+            calcularCLV();
+            calcularCostos();
+            calcularRetencion();
+        }
+
+        // --- INICIALIZACIÓN ---
+        // Calcular todo al cargar la página
+        window.onload = calcularTodo;
+
+    </script>
+</body>
+</html>
